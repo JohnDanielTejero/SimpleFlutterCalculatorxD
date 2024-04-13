@@ -106,7 +106,7 @@ class CalcState extends State<CalcMain> {
             case '-':
               result = firstnum! - lastnum!;
               break;
-            case '*':
+            case 'x':
               result = firstnum! * lastnum!;
               break;
             case '/':
@@ -283,10 +283,15 @@ class CalculatorButton extends StatelessWidget {
   final String label;
   final Function onPressed;
 
-  const CalculatorButton({required this.label, required this.onPressed});
+  const CalculatorButton(
+      {super.key, required this.label, required this.onPressed});
 
   Color _getButtonColor(String label) {
-    if (label == '+' || label == '-' || label == 'x' || label == '=') {
+    if (label == '+' ||
+        label == '-' ||
+        label == 'x' ||
+        label == '=' ||
+        label == '/') {
       return const Color.fromARGB(255, 12, 12, 12); // Color for operations
     } else {
       return const Color.fromARGB(255, 81, 81, 82); // Color for numbers
