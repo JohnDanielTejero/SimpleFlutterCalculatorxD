@@ -39,9 +39,9 @@ class MyApp extends StatelessWidget {
 }
 
 class CalcState extends State<CalcMain> {
-  double? firstnum = null;
-  double? lastnum = null;
-  String? operation = null;
+  double? firstnum;
+  double? lastnum;
+  String? operation;
   String currentVal = "0";
 
   void buttonClick(String val) {
@@ -61,7 +61,13 @@ class CalcState extends State<CalcMain> {
         currentVal += val;
         return;
       } on Exception catch (_) {
-        if (val == "backspace") {
+        if (val == "C") {
+          currentVal = "0";
+
+          return;
+        }
+
+        if (val == "DEL") {
           String newVal = currentVal.substring(0, currentVal.length - 1);
           currentVal = newVal.isEmpty || newVal == "-" ? "0" : newVal;
           return;
@@ -98,7 +104,7 @@ class CalcState extends State<CalcMain> {
             return;
           }
 
-          double? result = null;
+          double? result;
           switch (operation) {
             case '+':
               result = firstnum! + lastnum!;
@@ -112,6 +118,8 @@ class CalcState extends State<CalcMain> {
             case '/':
               result = firstnum! / lastnum!;
               break;
+            case '%':
+              result = firstnum! % lastnum!;
             default:
               Fluttertoast.showToast(
                   msg: "An error has occurred!",
@@ -126,6 +134,10 @@ class CalcState extends State<CalcMain> {
           lastnum = null;
           operation = null;
           currentVal = result.toString();
+          currentVal = currentVal.endsWith(".0")
+              ? currentVal.substring(0, currentVal.length - 2)
+              : currentVal;
+
           return;
         }
 
@@ -137,6 +149,10 @@ class CalcState extends State<CalcMain> {
           firstnum = double.parse(finalVal);
           operation = val;
           currentVal = "0";
+        } else {
+          Fluttertoast.showToast(
+              msg: "operator already selected!",
+              toastLength: Toast.LENGTH_SHORT);
         }
       }
     });
@@ -159,117 +175,34 @@ class CalcState extends State<CalcMain> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          buttonClick("backspace");
-                        },
-                        child: const Icon(
-                          Icons.backspace,
-                        ),
-                      ),
-                      Expanded(
-                          child: Padding(
-                              padding: const EdgeInsets.only(right: 5, left: 5),
-                              child: TextField(
-                                controller: controller,
-                                enabled: false,
-                                textAlign: TextAlign.end,
-                                decoration: const InputDecoration(
-                                    border: OutlineInputBorder()),
-                              ))),
-                      CalculatorButton(
-                        label: '=',
-                        onPressed: buttonClick,
-                      ),
-                    ]),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    CalculatorButton(
-                      label: '7',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '8',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '9',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '/',
-                      onPressed: buttonClick,
-                    ),
-                  ],
+                SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: TextField(
+                    controller: controller,
+                    enabled: false,
+                    textAlign: TextAlign.end,
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        filled: false,
+                        isCollapsed: true,
+                        isDense: true,
+                        contentPadding: EdgeInsets.only(
+                            top: 60, bottom: 60, left: 20, right: 20)),
+                  ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    CalculatorButton(
-                      label: '4',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '5',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '6',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: 'x',
-                      onPressed: buttonClick,
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    CalculatorButton(
-                      label: '1',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '2',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '3',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '-',
-                      onPressed: buttonClick,
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    CalculatorButton(
-                      label: '+/-',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '0',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '.',
-                      onPressed: buttonClick,
-                    ),
-                    CalculatorButton(
-                      label: '+',
-                      onPressed: buttonClick,
-                    ),
-                  ],
-                ),
+                RowButtons(
+                    onPressed: buttonClick, labels: const ["7", "8", "9", "/"]),
+                RowButtons(
+                    onPressed: buttonClick, labels: const ["4", "5", "6", "x"]),
+                RowButtons(
+                    onPressed: buttonClick, labels: const ["1", "2", "3", "-"]),
+                RowButtons(
+                    onPressed: buttonClick,
+                    labels: const ["+/-", "0", ".", "+"]),
+                RowButtons(
+                    onPressed: buttonClick,
+                    labels: const ["C", "%", "DEL", "="]),
               ],
             ),
           ),
@@ -287,14 +220,18 @@ class CalculatorButton extends StatelessWidget {
       {super.key, required this.label, required this.onPressed});
 
   Color _getButtonColor(String label) {
-    if (label == '+' ||
-        label == '-' ||
-        label == 'x' ||
-        label == '=' ||
-        label == '/') {
-      return const Color.fromARGB(255, 12, 12, 12); // Color for operations
+    if (label == '+' || label == '-' || label == 'x' || label == '/') {
+      return const Color.fromARGB(255, 31, 31, 31); // Color for operations
+    } else if (label == '+/-' ||
+        label == "." ||
+        label == "C" ||
+        label == "%" ||
+        label == "DEL") {
+      return const Color.fromARGB(255, 46, 45, 45);
+    } else if (label == '=') {
+      return const Color.fromARGB(255, 0, 0, 0);
     } else {
-      return const Color.fromARGB(255, 81, 81, 82); // Color for numbers
+      return const Color.fromARGB(255, 128, 128, 128); // Color for numbers
     }
   }
 
@@ -303,6 +240,7 @@ class CalculatorButton extends StatelessWidget {
     return FloatingActionButton(
       onPressed: () => onPressed(label),
       backgroundColor: _getButtonColor(label),
+      shape: const CircleBorder(),
       child: Text(
         label,
         style: const TextStyle(color: Colors.white),
@@ -318,38 +256,19 @@ class CalcMain extends StatefulWidget {
   State<StatefulWidget> createState() => CalcState();
 }
 
-class HelloWorld extends StatelessWidget {
-  const HelloWorld({super.key});
-
+class RowButtons extends StatelessWidget {
+  //const RowButtons({super.key});
+  final Function onPressed;
+  final List<String> labels;
+  //RowButtons({super.key, required this.onPressed, required this.labels});
+  const RowButtons({super.key, required this.onPressed, required this.labels});
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Fluttertoast.showToast(
-            msg: "clicked!",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            backgroundColor: const Color.fromARGB(255, 255, 0, 0));
-      },
-      child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-              border: Border.all(
-                  color: const Color.fromARGB(255, 255, 0, 0), width: 2)),
-          child: const Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Hello world",
-                    style: TextStyle(
-                        color: Color.fromARGB(255, 32, 132, 255),
-                        decoration: TextDecoration.none),
-                  )
-                ],
-              ))),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: labels.map((String label) {
+        return CalculatorButton(label: label, onPressed: onPressed);
+      }).toList(),
     );
   }
 }
